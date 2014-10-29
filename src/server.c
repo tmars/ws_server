@@ -2,13 +2,16 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "client.h"
+#include "websocket.h"
 
-int main( int argc, char *argv[] )
+int 
+main( int argc, char *argv[] )
 {
     int sockfd, newsockfd, portno, clilen;
     char buffer[256];
     struct sockaddr_in serv_addr, cli_addr;
-    int  n;
+    int  n, pid;
 
     /* First call to socket() function */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -16,50 +19,62 @@ int main( int argc, char *argv[] )
         perror("ERROR opening socket");
         exit(1);
     }
-
     /* Initialize socket structure */
     bzero((char *) &serv_addr, sizeof(serv_addr));
-    portno = 5001;
+    portno = 4980;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
  
     /* Now bind the host address using bind() call.*/
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, 
-                            sizeof(serv_addr)) < 0) {
+    if (bind(sockfd, (struct sockaddr *) &serv_addr,
+                          sizeof(serv_addr)) < 0) {
         perror("ERROR on binding");
         exit(1);
     }
-
-    /* Now start listening for the clients, here process will
-    * go in sleep mode and will wait for the incoming connection
-    */
+    /* Now start listening for the clients, here 
+     * process will go in sleep mode and will wait 
+     * for the incoming connection
+     */
     listen(sockfd,5);
     clilen = sizeof(cli_addr);
-
-    /* Accept actual connection from the client */
-    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, 
-                                &clilen);
-    if (newsockfd < 0) {
-        perror("ERROR on accept");
+    while (1) {
+        newsockfd = accept(sockfd, 
+                (struct sockaddr *) &cli_addr, &clilen);
+        if (newsockfd < 0) {
+            perror("ERROR on accept");
+            exit(1);
+        }
+        /* Create child process */
+        pid = fork();
+        if (pid < 0) {
+            perror("ERROR on fork");
+            exit(1);
+        }
+        if (pid == 0) {
+            /* This is the client process */
+            close(sockfd);
+            struct ws_client *c = ws_client_new(newsockfd);
+            doprocessing(c);
+            exit(0);
+        }
+        else {
+            close(newsockfd);
+        }
         exit(1);
-    }
-    
-    /* If connection is established then start communicating */
-    bzero(buffer, 256);
-    n = read(newsockfd, buffer, 255);
-    if (n < 0) {
-        perror("ERROR reading from socket");
-        exit(1);
-    }
-    printf("Here is the message: %s\n",buffer);
-
-    /* Write a response to the client */
-    n = write(newsockfd,"I got your message",18);
-    if (n < 0) {
-        perror("ERROR writing to socket");
-        exit(1);
-    }
-    
-    return 0; 
+    } /* end of while */
 }
+
+void
+doprocessing (struct ws_client *c)
+{
+    int n;
+    n = process_handshake(c);
+    if (n == 0) {
+        perror("Error handshake");
+        exit(1);
+    }
+    printf("Success handshake\n");
+    exit(0);
+}
+
