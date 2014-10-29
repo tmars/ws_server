@@ -65,6 +65,15 @@ main( int argc, char *argv[] )
     } /* end of while */
 }
 
+void 
+printbytes(const char t)
+{
+    int m;
+    for (m = 128; m > 0; m = m >> 1) {
+        printf("%u ", t & m ? 1 : 0);
+    }
+}
+
 void
 doprocessing (struct ws_client *c)
 {
@@ -82,9 +91,18 @@ doprocessing (struct ws_client *c)
             char* data = parse_data(c->buffer, c->size);
             if (data != NULL) {
                 printf("<<\n%s\n", data);
+                char *msg;
+                msg = new_msg(data, strlen(data), &n);
+                if (msg != NULL) {
+                    printf(">>\n%s\n", data);
+                    write(c->sock, msg, n);
+                }
+                else {
+                    printf("error 2\n");
+                }
             }
             else {
-                printf("error\n");
+                printf("error 1\n");
             }
 
             ws_client_remove_data(c);

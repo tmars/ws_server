@@ -10,6 +10,12 @@
      (((uint64_t)((p)[4])) << 32) + (((uint64_t)((p)[5])) << 40) +\
      (((uint64_t)((p)[6])) << 48) + (((uint64_t)((p)[7])) << 56))
 
+#define ws_htonl64(p) {\
+    (char)(((p & ((uint64_t)0xff <<  0)) >>  0) & 0xff), (char)(((p & ((uint64_t)0xff <<  8)) >>  8) & 0xff), \
+    (char)(((p & ((uint64_t)0xff << 16)) >> 16) & 0xff), (char)(((p & ((uint64_t)0xff << 24)) >> 24) & 0xff), \
+    (char)(((p & ((uint64_t)0xff << 32)) >> 32) & 0xff), (char)(((p & ((uint64_t)0xff << 40)) >> 40) & 0xff), \
+    (char)(((p & ((uint64_t)0xff << 48)) >> 48) & 0xff), (char)(((p & ((uint64_t)0xff << 56)) >> 56) & 0xff) }
+
 char *
 get_header_value(char *buffer, const char *key)
 {
@@ -167,6 +173,38 @@ parse_data(const char *frame, int size)
 
     } else {
         return NULL;
-        //return WS_READING;  // need more data
+        //return WS_READING;
     }
+}
+
+char *
+new_msg(const char *payload, int size, int *frame_size)
+{
+    char *frame = malloc(size + 8); // фрейм с учетом header
+    *frame_size = 0;
+    if (frame == NULL)
+        return NULL;
+    
+    frame[0] = 0x81; // 10000001
+    if (size <= 125) {
+        frame[1] = size;
+        memcpy(frame + 2, payload, size);
+        *frame_size = size + 2;
+    } 
+    else if (size > 125 && size <= 65536) {
+        uint16_t size16 = htons(size);
+        frame[1] = 126;
+        memcpy(frame + 2, &size16, 2);
+        memcpy(frame + 4, payload, size);
+        *frame_size = size + 4;
+    } 
+    else if (size > 65536) {
+        char size64[8] = ws_htonl64(size);
+        frame[1] = 127;
+        memcpy(frame + 2, size64, 8);
+        memcpy(frame + 10, payload, size);
+        *frame_size = size + 10;
+    }
+
+    return frame;
 }

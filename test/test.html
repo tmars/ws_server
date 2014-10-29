@@ -21,4 +21,5 @@ socket.onerror = function(error) {
 	alert("Ошибка " + error.message); 
 };
 </script>
-<button onclick="socket.send(123);">send</button>
+<input type="text" id="input" value="test">
+<button onclick="socket.send(document.getElementById('input').value);">send</button>
