@@ -12,6 +12,14 @@ ws_client_new(int sock)
 }
 
 int 
+ws_client_remove_data(struct ws_client *c)
+{
+	free(c->buffer);
+	c->buffer = NULL;
+	c->size = 0;
+}
+
+int 
 ws_client_read(struct ws_client *c)
 {
 	char buffer[4096];

@@ -10,4 +10,7 @@ get_handshake_hash(const char *);
 int 
 process_handshake(struct ws_client *);
 
+char *
+parse_data(const char *, int);
+
 #endif /* WEBSOCKET_H */

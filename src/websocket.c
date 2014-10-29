@@ -4,6 +4,12 @@
 #include "base64.h"
 #include "sha1.h"
 
+#define ws_ntohl64(p) \
+    ((((uint64_t)((p)[0])) <<  0) + (((uint64_t)((p)[1])) <<  8) +\
+     (((uint64_t)((p)[2])) << 16) + (((uint64_t)((p)[3])) << 24) +\
+     (((uint64_t)((p)[4])) << 32) + (((uint64_t)((p)[5])) << 40) +\
+     (((uint64_t)((p)[6])) << 48) + (((uint64_t)((p)[7])) << 56))
+
 char *
 get_header_value(char *buffer, const char *key)
 {
@@ -93,4 +99,74 @@ process_handshake(struct ws_client *c)
     printf(">>\n%s\n", answer);
 
     return 1;
+}
+
+char *
+parse_data(const char *frame, int size)
+{
+    int has_mask;
+    uint64_t len;
+    const char *payload; // указатель на payload
+    unsigned char mask[4];
+    
+    payload = frame;
+
+    // Проверка полного фрейма
+    /*if(size < 8) {
+        return WS_READING;
+    }*/
+
+    // 8 бит
+    has_mask = frame[1] & 0x80 ? 1:0;
+
+    // Извлечение размера payload
+    len = frame[1] & 0x7f;  // убираем 8 бит
+    if (len <= 125) { 
+        payload = frame + 2;
+    } 
+    else if(len == 126) {
+        // Размер payload 16-ое число
+        uint16_t size16;
+        memcpy(&size16, frame + 2, sizeof(uint16_t));
+        len = ntohs(size16);
+        payload = frame + 4;
+    } 
+    else if(len == 127) {
+        len = ws_ntohl64(frame + 2);
+        payload = frame + 10;
+    } 
+    else {
+        return NULL;
+        //return WS_ERROR;
+    }
+
+    // данные начинаются сразу после макси
+    if (has_mask) {
+        memcpy(&mask, payload, sizeof(mask));
+        payload += 4;
+    }
+
+    // Неостаточно данных
+    if(len > size - (payload - frame)) {
+        return NULL;
+        //return WS_READING;
+    }
+
+    
+    if(frame[0] & 0x80) { // FIN bit set
+        char *data = malloc(len+1);
+        memcpy(data, payload, len);
+        data[len] = '\0';
+        
+        size_t i;
+        for(i = 0; i < len && mask; ++i) {
+            data[i] = (unsigned char)payload[i] ^ mask[i%4];
+        }
+
+        return data;
+
+    } else {
+        return NULL;
+        //return WS_READING;  // need more data
+    }
 }

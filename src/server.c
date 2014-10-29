@@ -61,20 +61,35 @@ main( int argc, char *argv[] )
         else {
             close(newsockfd);
         }
-        exit(1);
+        //exit(1);
     } /* end of while */
 }
 
 void
 doprocessing (struct ws_client *c)
 {
-    int n;
+    int n, i, num;
     n = process_handshake(c);
     if (n == 0) {
         perror("Error handshake");
         exit(1);
     }
+    ws_client_remove_data(c);
     printf("Success handshake\n");
-    exit(0);
+    while(1) {
+        n = ws_client_read(c);
+        if (n > 0) {
+            char* data = parse_data(c->buffer, c->size);
+            if (data != NULL) {
+                printf("<<\n%s\n", data);
+            }
+            else {
+                printf("error\n");
+            }
+
+            ws_client_remove_data(c);
+        }
+    }
+    //exit(0);
 }
 
