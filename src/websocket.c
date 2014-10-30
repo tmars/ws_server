@@ -3,6 +3,7 @@
 #include "websocket.h"
 #include "base64.h"
 #include "sha1.h"
+#include "http.h"
 
 #define ws_ntohl64(p) \
     ((((uint64_t)((p)[0])) <<  0) + (((uint64_t)((p)[1])) <<  8) +\
@@ -15,28 +16,6 @@
     (char)(((p & ((uint64_t)0xff << 16)) >> 16) & 0xff), (char)(((p & ((uint64_t)0xff << 24)) >> 24) & 0xff), \
     (char)(((p & ((uint64_t)0xff << 32)) >> 32) & 0xff), (char)(((p & ((uint64_t)0xff << 40)) >> 40) & 0xff), \
     (char)(((p & ((uint64_t)0xff << 48)) >> 48) & 0xff), (char)(((p & ((uint64_t)0xff << 56)) >> 56) & 0xff) }
-
-char *
-get_header_value(char *buffer, const char *key)
-{
-    char *b, *e, *value;
-    
-    b = strstr(buffer, key);
-    if (b == NULL) 
-        return NULL;
-
-    b += strlen(key) + 2; // ': '
-    
-    e = strstr(b, "\r\n");
-    if (e == NULL) 
-        return NULL;
-
-    value = malloc(e-b+1);
-    bzero(value, 0);
-    memcpy(value, b, e-b);
-
-    return value;
-}
 
 char *
 get_handshake_hash(const char *key)
@@ -78,7 +57,7 @@ process_handshake(struct ws_client *c)
     printf("<<\n%s\n", c->buffer);
 
     // Выбираем из заголовка ключ
-    key = get_header_value(c->buffer, "Sec-WebSocket-Key");
+    key = http_get_header_value(c->buffer, "Sec-WebSocket-Key");
     if (key == NULL) {
         return 0;
     }
@@ -89,20 +68,19 @@ process_handshake(struct ws_client *c)
     printf("KEY: |%s|\n", key);
     printf("HASH: |%s|\n", hash);
 
+    free(key);
+
     // Формируем ответ
-    answer = malloc(4096);
-    bzero(answer, 4096);
+    struct http_response *r = http_response_init(101, "Switching Protocols");
+    http_response_set_header(r, "Upgrade", "websocket");
+    http_response_set_header(r, "Connection", "Upgrade");
+    http_response_set_header(r, "Sec-WebSocket-Accept", hash);
     
-    strcpy(answer, "HTTP/1.1 101 Switching Protocols\r\n");
-    strcat(answer, "Upgrade: websocket\r\n");
-    strcat(answer, "Connection: Upgrade\r\n");
-    strcat(answer, "Sec-WebSocket-Accept: ");
-    strcat(answer, hash);
-    strcat(answer, "\r\n\r\n");
-    
+    http_response_write(r);
+
     // Отправляем ответ
-    write(c->sock, answer, strlen(answer));
-    printf(">>\n%s\n", answer);
+    write(c->sock, r->out, r->out_sz);
+    printf(">>\n%s\n", r->out);
 
     return 1;
 }

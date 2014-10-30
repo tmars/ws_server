@@ -6,8 +6,8 @@ CFLAGS=-w -std=c99
 SRC=src/
 BIN=bin/
 
-all: server.o base64.o sha1.o client.o websocket.o
-	$(CC) $(CFLAGS) $(BIN)server.o $(BIN)base64.o $(BIN)sha1.o $(BIN)client.o $(BIN)websocket.o -o $(BIN)server
+all: server.o base64.o sha1.o client.o websocket.o http.o
+	$(CC) $(CFLAGS) $(BIN)server.o $(BIN)base64.o $(BIN)sha1.o $(BIN)client.o $(BIN)websocket.o $(BIN)http.o -o $(BIN)server
 
 server.o:
 	$(CC) $(CFLAGS) $(SRC)server.c -c -o $(BIN)server.o
@@ -23,6 +23,9 @@ client.o:
 
 websocket.o:
 	$(CC) $(CFLAGS) $(SRC)websocket.c -c -o $(BIN)websocket.o
+
+http.o:
+	$(CC) $(CFLAGS) $(SRC)http.c -c -o $(BIN)http.o
 
 run:
 	$(BIN)server
