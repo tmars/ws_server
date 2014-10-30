@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include "client.h"
 #include "websocket.h"
+#include "frame.h"
 
 int 
 main( int argc, char *argv[] )
@@ -85,23 +86,23 @@ doprocessing (struct ws_client *c)
     }
     ws_client_remove_data(c);
     printf("Success handshake\n");
+    int ind = 0;
     while(1) {
         n = ws_client_read(c);
         if (n > 0) {
-            char* data = parse_data(c->buffer, c->size);
-            if (data != NULL) {
-                printf("<<\n%s\n", data);
-                char *msg;
-                msg = new_msg(data, strlen(data), &n);
-                if (msg != NULL) {
-                    printf(">>\n%s\n", data);
-                    write(c->sock, msg, n);
-                    free(msg);
+            struct frame *f = frame_parse(c->buffer, c->size);
+            if (f != NULL) {
+                printf("<<%d\n%s\n", ind++, f->payload);
+                struct frame *a = frame_init(f->payload, strlen(f->payload));
+                if (a != NULL) {
+                    printf(">>\n%s\n", f->payload);
+                    write(c->sock, a->data, a->size);
+                    frame_free(a);
                 }
                 else {
                     printf("error 2\n");
                 }
-                free(data);
+                frame_free(f);
             }
             else {
                 printf("error 1\n");

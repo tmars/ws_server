@@ -20,6 +20,16 @@ socket.onmessage = function(event) {
 socket.onerror = function(error) { 
 	alert("Ошибка " + error.message); 
 };
+
+var ind = 0;
+function sendMessage()
+{
+	for(i=0;i<3;i++){
+		console.log(ind);
+		socket.send(document.getElementById('input').value);
+		ind++;
+	}
+}
 </script>
 <input type="text" id="input" value="test">
-<button onclick="socket.send(document.getElementById('input').value);">send</button>
+<button onclick="sendMessage()">send</button>
