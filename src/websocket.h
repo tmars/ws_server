@@ -1,7 +1,7 @@
-#ifndef WEBSOCKET_H
-#define WEBSOCKET_H
+#ifndef WEBSOCKET_H_
+#define WEBSOCKET_H_
 
-int 
+int
 process_handshake(struct ws_client *);
 
-#endif /* WEBSOCKET_H */
+#endif  // WEBSOCKET_H_

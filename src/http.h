@@ -1,32 +1,32 @@
-#ifndef HTTP_H
-#define HTTP_H
+#ifndef HTTP_H_
+#define HTTP_H_
 
-#include <sys/types.h> // size_t
+#include <sys/types.h>  // size_t
 
 struct http_header {
-	char *key;
-	size_t key_sz;
+    char *key;
+    size_t key_sz;
 
-	char *val;
-	size_t val_sz;
+    char *val;
+    size_t val_sz;
 };
 
 struct http_response {
-	short code;
-	const char *msg;
+    int16_t code;
+    const char *msg;
 
-	struct http_header *headers;
-	int header_count;
+    struct http_header *headers;
+    int header_count;
 
-	const char *body;
-	size_t body_len;
+    const char *body;
+    size_t body_len;
 
-	char *out;
-	size_t out_sz;
+    char *out;
+    size_t out_sz;
 };
 
 struct http_response *
-http_response_init(int code, const char *msg);
+http_response_init(int16_t code, const char *msg);
 
 void
 http_response_set_header(struct http_response *r, const char *k, const char *v);
@@ -34,10 +34,10 @@ http_response_set_header(struct http_response *r, const char *k, const char *v);
 void
 http_response_write(struct http_response *r);
 
-void 
+void
 http_response_free(struct http_response *r);
 
 char *
 http_get_header_value(char *buffer, const char *key);
 
-#endif // HTTP_H
+#endif  // HTTP_H_

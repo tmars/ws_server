@@ -17,13 +17,13 @@ frame_parse(const char *buffer, int size)
 {
     int has_mask;
     uint64_t len;
-    const char *p; // указатель на payload
+    const char *p;  // указатель на payload
     unsigned char mask[4];
-    
+
     p = buffer;
 
     // Проверка полного фрейма
-    if(size < 8) {
+    if (size < 8) {
         return NULL;
     }
 
@@ -32,21 +32,18 @@ frame_parse(const char *buffer, int size)
 
     // Извлечение размера payload
     len = buffer[1] & 0x7f;  // убираем 8 бит
-    if (len <= 125) { 
+    if (len <= 125) {
         p = buffer + 2;
-    } 
-    else if(len == 126) {
+    } else if (len == 126) {
         // Размер payload 16-ое число
         uint16_t size16;
         memcpy(&size16, buffer + 2, sizeof(uint16_t));
         len = ntohs(size16);
         p = buffer + 4;
-    } 
-    else if(len == 127) {
+    } else if (len == 127) {
         len = ws_ntohl64(buffer + 2);
         p = buffer + 10;
-    } 
-    else {
+    } else {
         return NULL;
     }
 
@@ -57,30 +54,30 @@ frame_parse(const char *buffer, int size)
     }
 
     // Неостаточно данных
-    if(len > size - (p - buffer)) {
+    if (len > size - (p - buffer)) {
         return NULL;
     }
 
-    
-    if(buffer[0] & 0x80) { // FIN bit set
+
+    if (buffer[0] & 0x80) {  // FIN bit set
         struct frame *f = calloc(1, sizeof(struct frame));
 
         f->size = len + (p - buffer);
-        // TODO: заполнить f->data
-        
+        // TODO(tmars): заполнить f->data
+
         f->payload_size = len;
         f->payload = malloc(len+1);
         memcpy(f->payload, p, len);
         f->payload[len] = '\0';
-        
+
         size_t i;
-        for(i = 0; i < len && mask; ++i) {
+        for (i = 0; i < len && mask; ++i) {
             f->payload[i] = (unsigned char)f->payload[i] ^ mask[i%4];
         }
 
         return f;
-    } 
-    
+    }
+
     return NULL;
 }
 
@@ -88,24 +85,22 @@ struct frame *
 frame_init(const char *payload, int size)
 {
     struct frame *f = calloc(1, sizeof(struct frame));
-    
-    f->data = malloc(size + 8); // фрейм с учетом header
+
+    f->data = malloc(size + 8);  // фрейм с учетом header
     f->size = 0;
-    
-    f->data[0] = 0x81; // 10000001
+
+    f->data[0] = 0x81;  // 10000001
     if (size <= 125) {
         f->data[1] = size;
         memcpy(f->data + 2, payload, size);
         f->size = size + 2;
-    } 
-    else if (size > 125 && size <= 65536) {
+    } else if (size > 125 && size <= 65536) {
         uint16_t size16 = htons(size);
         f->data[1] = 126;
         memcpy(f->data + 2, &size16, 2);
         memcpy(f->data + 4, payload, size);
         f->size = size + 4;
-    } 
-    else if (size > 65536) {
+    } else if (size > 65536) {
         char size64[8] = ws_htonl64(size);
         f->data[1] = 127;
         memcpy(f->data + 2, size64, 8);

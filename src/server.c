@@ -1,13 +1,13 @@
 #include <stdio.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "client.h"
 #include "websocket.h"
 #include "frame.h"
 
-int 
-main( int argc, char *argv[] )
+int
+main(int argc, char *argv[])
 {
     int sockfd, newsockfd, portno, clilen;
     char buffer[256];
@@ -26,7 +26,7 @@ main( int argc, char *argv[] )
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
- 
+
     /* Now bind the host address using bind() call.*/
     if (bind(sockfd, (struct sockaddr *) &serv_addr,
                           sizeof(serv_addr)) < 0) {
@@ -37,10 +37,10 @@ main( int argc, char *argv[] )
      * process will go in sleep mode and will wait 
      * for the incoming connection
      */
-    listen(sockfd,5);
+    listen(sockfd, 5);
     clilen = sizeof(cli_addr);
     while (1) {
-        newsockfd = accept(sockfd, 
+        newsockfd = accept(sockfd,
                 (struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0) {
             perror("ERROR on accept");
@@ -58,15 +58,14 @@ main( int argc, char *argv[] )
             struct ws_client *c = ws_client_new(newsockfd);
             doprocessing(c);
             exit(0);
-        }
-        else {
+        } else {
             close(newsockfd);
         }
-        //exit(1);
-    } /* end of while */
+        // exit(1);
+    }
 }
 
-void 
+void
 printbytes(const char t)
 {
     int m;
@@ -76,7 +75,7 @@ printbytes(const char t)
 }
 
 void
-doprocessing (struct ws_client *c)
+doprocessing(struct ws_client *c)
 {
     int n, i, num;
     n = process_handshake(c);
@@ -87,7 +86,7 @@ doprocessing (struct ws_client *c)
     ws_client_remove_data(c);
     printf("Success handshake\n");
     int ind = 0;
-    while(1) {
+    while (1) {
         n = ws_client_read(c);
         if (n > 0) {
             struct frame *f = frame_parse(c->buffer, c->size);
@@ -98,19 +97,16 @@ doprocessing (struct ws_client *c)
                     printf(">>\n%s\n", f->payload);
                     write(c->sock, a->data, a->size);
                     frame_free(a);
-                }
-                else {
+                } else {
                     printf("error 2\n");
                 }
                 frame_free(f);
-            }
-            else {
+            } else {
                 printf("error 1\n");
             }
 
             ws_client_remove_data(c);
         }
     }
-    //exit(0);
+    // exit(0);
 }
-

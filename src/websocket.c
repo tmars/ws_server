@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "client.h"
 #include "websocket.h"
-#include "base64.h"
-#include "sha1.h"
+#include "lib/base64.h"
+#include "lib/sha1.h"
 #include "http.h"
 
 char *
@@ -10,7 +10,7 @@ compute_handshake_hash(const char *key)
 {
     unsigned char *buffer, sha1_output[20];
     char magic[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    
+
     // websocket handshake
     size_t key_sz = key?strlen(key):0, buffer_sz = key_sz + sizeof(magic) - 1;
     buffer = calloc(buffer_sz, 1);
@@ -25,13 +25,13 @@ compute_handshake_hash(const char *key)
     SHA1_Init(ctx);
     SHA1_Update(ctx, buffer, buffer_sz);
     SHA1_Final(sha1_output, ctx);
-    
+
     // encode `sha1_output' in base 64, into `out'.
     size_t l;
     return base64_encode(sha1_output, 20, &l);
 }
 
-int 
+int
 process_handshake(struct ws_client *c)
 {
     char *key, *hash, *answer;
@@ -52,7 +52,7 @@ process_handshake(struct ws_client *c)
 
     // Вычисляем хеш
     hash = compute_handshake_hash(key);
-    
+
     printf("KEY: |%s|\n", key);
     printf("HASH: |%s|\n", hash);
 
@@ -62,12 +62,12 @@ process_handshake(struct ws_client *c)
     http_response_set_header(r, "Upgrade", "websocket");
     http_response_set_header(r, "Connection", "Upgrade");
     http_response_set_header(r, "Sec-WebSocket-Accept", hash);
-    
+
     http_response_write(r);
 
     // Отправляем ответ
     write(c->sock, r->out, r->out_sz);
-    printf(">>\n%s\n", r->out);
+    printf(">>%d\n%s\n", r->out_sz, r->out);
 
     http_response_free(r);
     free(key);
