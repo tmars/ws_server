@@ -7,7 +7,7 @@ http_response_init(int code, const char *msg)
 
 	r->code = code;
 	r->msg = msg;
-	
+
 	return r;
 }
 
@@ -108,20 +108,34 @@ http_response_write(struct http_response *r)
 	}
 }
 
+void 
+http_response_free(struct http_response *r)
+{
+	if (r->out) free(r->out);
+	if (r->body) free(r->body);
+
+	while (r->header_count > 0) {
+		r->header_count--;
+		free(r->headers[r->header_count].key);
+		free(r->headers[r->header_count].val);
+	}
+
+	free(r->headers);
+	free(r);
+}
+
 char *
 http_get_header_value(char *buffer, const char *key)
 {
     char *b, *e, *value;
     
     b = strstr(buffer, key);
-    if (b == NULL) 
-        return NULL;
+    if (b == NULL) return NULL;
 
     b += strlen(key) + 2; // ': '
     
     e = strstr(b, "\r\n");
-    if (e == NULL) 
-        return NULL;
+    if (e == NULL) return NULL;
 
     value = malloc(e-b+1);
     bzero(value, 0);

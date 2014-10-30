@@ -34,6 +34,9 @@ http_response_set_header(struct http_response *r, const char *k, const char *v);
 void
 http_response_write(struct http_response *r);
 
+void 
+http_response_free(struct http_response *r);
+
 char *
 http_get_header_value(char *buffer, const char *key);
 

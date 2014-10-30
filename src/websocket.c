@@ -82,6 +82,8 @@ process_handshake(struct ws_client *c)
     write(c->sock, r->out, r->out_sz);
     printf(">>\n%s\n", r->out);
 
+    http_response_free(r);
+
     return 1;
 }
 
