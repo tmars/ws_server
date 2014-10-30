@@ -18,7 +18,7 @@
     (char)(((p & ((uint64_t)0xff << 48)) >> 48) & 0xff), (char)(((p & ((uint64_t)0xff << 56)) >> 56) & 0xff) }
 
 char *
-get_handshake_hash(const char *key)
+compute_handshake_hash(const char *key)
 {
     unsigned char *buffer, sha1_output[20];
     char magic[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -63,7 +63,7 @@ process_handshake(struct ws_client *c)
     }
 
     // Вычисляем хеш
-    hash = get_handshake_hash(key);
+    hash = compute_handshake_hash(key);
     
     printf("KEY: |%s|\n", key);
     printf("HASH: |%s|\n", hash);
@@ -84,7 +84,7 @@ process_handshake(struct ws_client *c)
     http_response_free(r);
     free(key);
     free(hash);
-    
+
     return 1;
 }
 
