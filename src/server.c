@@ -96,10 +96,12 @@ doprocessing (struct ws_client *c)
                 if (msg != NULL) {
                     printf(">>\n%s\n", data);
                     write(c->sock, msg, n);
+                    free(msg);
                 }
                 else {
                     printf("error 2\n");
                 }
+                free(data);
             }
             else {
                 printf("error 1\n");

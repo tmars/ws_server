@@ -68,7 +68,6 @@ process_handshake(struct ws_client *c)
     printf("KEY: |%s|\n", key);
     printf("HASH: |%s|\n", hash);
 
-    free(key);
 
     // Формируем ответ
     struct http_response *r = http_response_init(101, "Switching Protocols");
@@ -83,7 +82,9 @@ process_handshake(struct ws_client *c)
     printf(">>\n%s\n", r->out);
 
     http_response_free(r);
-
+    free(key);
+    free(hash);
+    
     return 1;
 }
 
