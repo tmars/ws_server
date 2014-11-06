@@ -1,5 +1,8 @@
-#include <stdio.h>
 #include "client.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 struct ws_client*
 ws_client_new(int sock)
@@ -11,7 +14,7 @@ ws_client_new(int sock)
     return c;
 }
 
-int
+void
 ws_client_remove_data(struct ws_client *c)
 {
     free(c->buffer);

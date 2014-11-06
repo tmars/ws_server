@@ -1,4 +1,7 @@
 #include "http.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 struct http_response *
 http_response_init(int16_t code, const char *msg)
@@ -111,7 +114,6 @@ void
 http_response_free(struct http_response *r)
 {
     if (r->out) free(r->out);
-    if (r->body) free(r->body);
 
     while (r->header_count > 0) {
         r->header_count--;
@@ -137,7 +139,7 @@ http_get_header_value(char *buffer, const char *key)
     if (e == NULL) return NULL;
 
     value = malloc(e-b+1);
-    bzero(value, 0);
+    memset(value, 0, sizeof(value));
     memcpy(value, b, e-b);
 
     return value;

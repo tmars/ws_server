@@ -1,4 +1,8 @@
 #include "frame.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <netinet/in.h>
 
 #define ws_ntohl64(p) \
     ((((uint64_t)((p)[0])) <<  0) + (((uint64_t)((p)[1])) <<  8) +\

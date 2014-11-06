@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #ifndef CLIENT_H_
 #define CLIENT_H_
 
@@ -11,7 +13,7 @@ struct ws_client {
 struct ws_client*
 ws_client_new(int sock);
 
-int
+void
 ws_client_remove_data(struct ws_client *);
 
 int

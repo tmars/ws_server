@@ -1,10 +1,16 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "client.h"
 #include "websocket.h"
 #include "frame.h"
+
+void
+doprocessing(struct ws_client *c);
 
 int
 main(int argc, char *argv[])
@@ -21,7 +27,7 @@ main(int argc, char *argv[])
         exit(1);
     }
     /* Initialize socket structure */
-    bzero((char *) &serv_addr, sizeof(serv_addr));
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
     portno = 4980;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;

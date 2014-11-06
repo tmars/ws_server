@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "client.h"
 #include "websocket.h"
 #include "lib/base64.h"
