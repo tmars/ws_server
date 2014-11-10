@@ -93,26 +93,24 @@ doprocessing(struct ws_client *c)
     printf("Success handshake\n");
     int ind = 0;
     while (1) {
-        n = ws_client_read(c);
-        if (n > 0) {
-            struct frame *f = frame_parse(c->buffer, c->size);
-            if (f != NULL) {
-                printf("<<%d\n%s\n", ind++, f->payload);
-                struct frame *a = frame_init(f->payload, strlen(f->payload));
-                if (a != NULL) {
-                    printf(">>\n%s\n", f->payload);
-                    write(c->sock, a->data, a->size);
-                    frame_free(a);
-                } else {
-                    printf("error 2\n");
-                }
-                frame_free(f);
-            } else {
-                printf("error 1\n");
-            }
-
-            ws_client_remove_data(c);
+        struct frame *r = ws_client_receive(c);
+        if (r == NULL) {
+            continue;
         }
+        printf("<<%d\n%s\n", ind++, r->payload);
+
+        struct frame *s = frame_init(r->payload, r->payload_size, r->opcode);
+        if (s == NULL) {
+            printf("error\n");
+            continue;
+        }
+
+        printf(">>\n%s\n", s->payload);
+        ws_client_send(c, s);
+
+        frame_free(s);
+        frame_free(r);
+        ws_client_remove_data(c);
     }
     // exit(0);
 }

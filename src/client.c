@@ -42,3 +42,44 @@ ws_client_read(struct ws_client *c)
 
     return n;
 }
+
+int
+ws_client_write(struct ws_client *c, char *data, size_t size)
+{
+    int n;
+
+    n = write(c->sock, data, size);
+    if (n <= 0) {
+        return -1;
+    }
+
+    return n;
+}
+
+struct frame *
+ws_client_receive(struct ws_client *c)
+{
+    int n;
+
+    n = ws_client_read(c);
+    if (n <= 0) {
+        return NULL;
+    }
+
+    struct frame *f = frame_parse(c->buffer, c->size);
+    if (f == NULL) {
+        return NULL;
+    }
+
+    return f;
+}
+
+int
+ws_client_send(struct ws_client *c, struct frame *f)
+{
+    if (f == NULL) {
+        return -1;
+    }
+
+    return ws_client_write(c, f->data, f->size);
+}

@@ -17,7 +17,7 @@
     (char)(((p & ((uint64_t)0xff << 48)) >> 48) & 0xff), (char)(((p & ((uint64_t)0xff << 56)) >> 56) & 0xff) }
 
 struct frame *
-frame_parse(const char *buffer, int size)
+frame_parse(const char *buffer, size_t size)
 {
     int has_mask;
     uint64_t len;
@@ -66,13 +66,21 @@ frame_parse(const char *buffer, int size)
     if (buffer[0] & 0x80) {  // FIN bit set
         struct frame *f = calloc(1, sizeof(struct frame));
 
+        f->opcode = buffer[0] & 0x0F;
         f->size = len + (p - buffer);
-        // TODO(tmars): заполнить f->data
+        f->data = malloc(f->size);
+        memcpy(f->data, buffer, f->size);
 
-        f->payload_size = len;
-        f->payload = malloc(len+1);
-        memcpy(f->payload, p, len);
-        f->payload[len] = '\0';
+        if (f->opcode == OPCODE_TEXT) {  // добавляем символ '\0'
+            f->payload_size = len+1;
+            f->payload = malloc(f->payload_size);
+            memcpy(f->payload, p, f->payload_size);
+            f->payload[len] = '\0';
+        } else {
+            f->payload_size = len;
+            f->payload = malloc(f->payload_size);
+            memcpy(f->payload, p, f->payload_size);
+        }
 
         size_t i;
         for (i = 0; i < len && mask; ++i) {
@@ -86,31 +94,38 @@ frame_parse(const char *buffer, int size)
 }
 
 struct frame *
-frame_init(const char *payload, int size)
+frame_init(const char *payload, size_t size, char opcode)
 {
+    size_t header_size = 0;
+
     struct frame *f = calloc(1, sizeof(struct frame));
 
     f->data = malloc(size + 8);  // фрейм с учетом header
-    f->size = 0;
+    f->payload = malloc(size);
 
-    f->data[0] = 0x81;  // 10000001
+    f->data[0] = 0x80 | opcode;  // установка флага FIN и OPCODE
     if (size <= 125) {
         f->data[1] = size;
-        memcpy(f->data + 2, payload, size);
-        f->size = size + 2;
+        header_size = 2;
     } else if (size > 125 && size <= 65536) {
-        uint16_t size16 = htons(size);
         f->data[1] = 126;
+        header_size = 4;
+
+        uint16_t size16 = htons(size);
         memcpy(f->data + 2, &size16, 2);
-        memcpy(f->data + 4, payload, size);
-        f->size = size + 4;
     } else if (size > 65536) {
-        char size64[8] = ws_htonl64(size);
         f->data[1] = 127;
+        header_size = 10;
+
+        char size64[8] = ws_htonl64(size);
         memcpy(f->data + 2, size64, 8);
-        memcpy(f->data + 10, payload, size);
-        f->size = size + 10;
     }
+
+    f->payload_size = size;
+    memcpy(f->payload, payload, size);
+
+    f->size = size + header_size;
+    memcpy(f->data + header_size, payload, size);
 
     return f;
 }
