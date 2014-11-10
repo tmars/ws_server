@@ -6,6 +6,7 @@ LDFLAGS=
 
 # директории
 SRC=src
+TEST=test
 BIN=bin
 OBJ=obj
 TOOLS=tools
@@ -14,24 +15,28 @@ SRC_SUB = . lib
 # скрипт проверки кода
 CPPLINT=$(TOOLS)/cpplint/cpplint.py
 
-OBJ_DIRS=$(addprefix $(OBJ)/, $(SRC_SUB))
+OBJ_DIRS=$(addprefix $(OBJ)/, $(SRC_SUB) $(TEST))
 SRC_DIRS=$(addprefix $(SRC)/, $(SRC_SUB))
 
 SOURCES=$(wildcard $(addsuffix /*.c, $(SRC_DIRS)))
-OBJECTS=$(SOURCES:.c=.o)
+OBJECTS=$(patsubst $(SRC)/%, $(OBJ)/%, $(SOURCES:.c=.o))
+
+TEST_SOURCES=$(wildcard $(addsuffix /*.c, $(TEST)))
+TEST_OBJECTS=$(addprefix $(OBJ)/, $(TEST_SOURCES:.c=.o))
 
 PROGRAM=$(BIN)/server
+TEST_CC=$(LD) $(LDFLAGS) -o $@ $^
 
 all: $(PROGRAM)
 
 $(PROGRAM): mk_dirs $(OBJECTS)
-	$(LD) -o $@ $(patsubst $(SRC)/%, $(OBJ)/%, $(OBJECTS)) $(LDFLAGS)
+	$(LD) $(LDFLAGS) $(patsubst $(SRC)/%, $(OBJ)/%, $(OBJECTS)) -o $@
 
 mk_dirs:
 	mkdir -p $(OBJ_DIRS) $(BIN)
 
-%.o: %.c
-	$(CC) $(CFLAGS) $^ -c -o $(patsubst $(SRC)/%, $(OBJ)/%, $@)
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) $^ -c -o $@
 
 run:
 	$(PROGRAM)
@@ -41,3 +46,19 @@ clean:
 
 test_style: $(wildcard $(SRC)/*.h) $(wildcard $(SRC)/*.c)
 	$(shell python $(CPPLINT) --root=$(SRC) $^)
+	@echo Style test: OK!
+
+# cборка объектного файла теста
+$(OBJ)/$(TEST)/%.o: $(TEST)/%.c
+	$(CC) $(CFLAGS) $^ -c -o $@ -I$(SRC)
+
+# cборка испольняемого файла теста
+$(BIN)/test_frame: $(OBJ)/$(TEST)/test_frame.o $(OBJ)/frame.o
+	$(TEST_CC)
+
+# вызов модульных тестов
+test_units: mk_dirs $(BIN)/test_frame
+	$(BIN)/test_frame
+	@echo Unit tests: OK!
+
+tests: test_style test_units

@@ -100,11 +100,7 @@ doprocessing(struct ws_client *c)
         printf("<<%d\n%s\n", ind++, r->payload);
 
         struct frame *s = frame_create(r->payload, r->payload_size, r->opcode);
-        if (s == NULL) {
-            printf("error\n");
-            continue;
-        }
-
+        
         printf(">>\n%s\n", s->payload);
         ws_client_send(c, s);
 

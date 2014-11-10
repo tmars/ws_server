@@ -31,6 +31,11 @@ frame_parse(const char *buffer, size_t size)
         return NULL;
     }
 
+    // Проверка инициализации буфера
+    if (buffer == NULL) {
+        return NULL;
+    }
+
     // 8 бит
     has_mask = buffer[1] & 0x80 ? 1:0;
 
@@ -47,8 +52,6 @@ frame_parse(const char *buffer, size_t size)
     } else if (len == 127) {
         len = ws_ntohl64(buffer + 2);
         p = buffer + 10;
-    } else {
-        return NULL;
     }
 
     // данные начинаются сразу после макси
@@ -97,8 +100,11 @@ struct frame *
 frame_create(const char *payload, size_t size, char opcode)
 {
     size_t header_size = 0;
-
     struct frame *f = calloc(1, sizeof(struct frame));
+
+    if (payload == NULL && size != 0) {
+        return NULL;
+    }
 
     f->data = malloc(size + 8);  // фрейм с учетом header
     f->payload = malloc(size);
