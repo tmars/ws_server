@@ -26,7 +26,7 @@ struct frame *
 frame_parse(const char *buffer, size_t size);
 
 struct frame *
-frame_init(const char *payload, size_t size, char opcode);
+frame_create(const char *payload, size_t size, char opcode);
 
 void
 frame_free(struct frame *f);
