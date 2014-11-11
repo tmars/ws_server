@@ -98,15 +98,16 @@ doprocessing(struct ws_client *c)
             continue;
         }
         printf("<<%d\n%s\n", ind++, r->payload);
+        frame_free(r);
 
-        struct frame *s = frame_create(r->payload, r->payload_size, r->opcode);
+        /*struct frame *s = frame_create(r->payload, r->payload_size, r->opcode);
         
         printf(">>\n%s\n", s->payload);
         ws_client_send(c, s);
 
         frame_free(s);
         frame_free(r);
-        ws_client_remove_data(c);
+        ws_client_remove_data(c);*/
     }
     // exit(0);
 }

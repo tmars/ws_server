@@ -3,11 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 struct ws_client*
 ws_client_new(int sock)
 {
     struct ws_client *c = calloc(1, sizeof(struct ws_client));
+
+    // Делаем сокет не блокирующим
+    int flags = fcntl(sock, F_GETFL, 0);
+    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 
     c->sock = sock;
 
@@ -30,11 +35,11 @@ ws_client_read(struct ws_client *c)
 
     n = read(c->sock, buffer, sizeof(buffer));
     if (n <= 0) {
-        return -1;
+        return n;
     }
 
     c->buffer = realloc(c->buffer, c->size + n);
-    if (!c->buffer) {
+    if (c->buffer == NULL) {
         return -1;
     }
     memcpy(c->buffer + c->size, buffer, n);
@@ -50,7 +55,7 @@ ws_client_write(struct ws_client *c, char *data, size_t size)
 
     n = write(c->sock, data, size);
     if (n <= 0) {
-        return -1;
+        return n;
     }
 
     return n;
@@ -59,17 +64,24 @@ ws_client_write(struct ws_client *c, char *data, size_t size)
 struct frame *
 ws_client_receive(struct ws_client *c)
 {
-    int n;
+    size_t size;
 
-    n = ws_client_read(c);
-    if (n <= 0) {
-        return NULL;
-    }
+    // Считываем буфер
+    ws_client_read(c);
 
+    // Парсим кадр
     struct frame *f = frame_parse(c->buffer, c->size);
     if (f == NULL) {
         return NULL;
     }
+
+    // Освобождаем распарсенные данные
+    size = c->size - f->size;
+    char *buffer = malloc(size);
+    memcpy(buffer, c->buffer + f->size, size);
+    ws_client_remove_data(c);
+    c->buffer = buffer;
+    c->size = size;
 
     return f;
 }
