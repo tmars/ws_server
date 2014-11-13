@@ -121,8 +121,6 @@ ws_client_work(struct ws_client *c)
     write(c->sock, r->out, r->out_size);
     http_response_free(r);
 
-    printf("Success handshake\n");
-
     while (1) {
         ws_client_read(c);
         struct frame *f = ws_client_receive(c);
