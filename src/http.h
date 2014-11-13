@@ -5,10 +5,10 @@
 
 struct http_header {
     char *key;
-    size_t key_sz;
+    size_t key_size;
 
     char *val;
-    size_t val_sz;
+    size_t val_size;
 };
 
 struct http_response {
@@ -22,7 +22,7 @@ struct http_response {
     size_t body_len;
 
     char *out;
-    size_t out_sz;
+    size_t out_size;
 };
 
 struct http_response *
@@ -32,7 +32,7 @@ void
 http_response_set_header(struct http_response *r, const char *k, const char *v);
 
 void
-http_response_write(struct http_response *r);
+http_response_pack(struct http_response *r);
 
 void
 http_response_free(struct http_response *r);

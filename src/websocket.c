@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "client.h"
 #include "websocket.h"
 #include "lib/base64.h"
 #include "lib/sha1.h"
-#include "http.h"
 
 char *
 compute_handshake_hash(const char *key)
@@ -34,47 +32,34 @@ compute_handshake_hash(const char *key)
     return base64_encode(sha1_output, 20, &l);
 }
 
-int
-process_handshake(struct ws_client *c)
+struct http_response *
+get_handshake_response(char *header)
 {
     char *key, *hash, *answer;
     int n;
 
-    // Читаем данные
-    n = ws_client_read(c);
-    if (n <= 0) {
-        return 0;
-    }
-    printf("<<\n%s\n", c->buffer);
-
     // Выбираем из заголовка ключ
-    key = http_get_header_value(c->buffer, "Sec-WebSocket-Key");
+    key = http_get_header_value(header, "Sec-WebSocket-Key");
     if (key == NULL) {
-        return 0;
+        return NULL;
     }
 
     // Вычисляем хеш
     hash = compute_handshake_hash(key);
 
-    printf("KEY: |%s|\n", key);
-    printf("HASH: |%s|\n", hash);
-
+    // printf("KEY: |%s|\n", key);
+    // printf("HASH: |%s|\n", hash);
 
     // Формируем ответ
-    struct http_response *r = http_response_init(101, "Switching Protocols");
-    http_response_set_header(r, "Upgrade", "websocket");
-    http_response_set_header(r, "Connection", "Upgrade");
-    http_response_set_header(r, "Sec-WebSocket-Accept", hash);
+    struct http_response *response = http_response_init(101, "Switching Protocols");
+    http_response_set_header(response, "Upgrade", "websocket");
+    http_response_set_header(response, "Connection", "Upgrade");
+    http_response_set_header(response, "Sec-WebSocket-Accept", hash);
 
-    http_response_write(r);
+    http_response_pack(response);
 
-    // Отправляем ответ
-    write(c->sock, r->out, r->out_sz);
-    printf(">>%d\n%s\n", r->out_sz, r->out);
-
-    http_response_free(r);
     free(key);
     free(hash);
 
-    return 1;
+    return response;
 }

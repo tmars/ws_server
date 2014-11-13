@@ -6,11 +6,35 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "client.h"
-#include "websocket.h"
 #include "frame.h"
 
 void
-doprocessing(struct ws_client *c);
+on_text_frame(struct ws_client *c, char *text, size_t size)
+{
+    printf("size=%d\ncontent:\n%s\n", size, text);
+}
+
+void
+on_bin_frame(struct ws_client *c, char *data, size_t size)
+{
+    size_t i;
+    printf("size=%d", size);
+    for (i = 0; i < size; i++) {
+        printf("0x%02x\n", data[i]);
+    }
+}
+
+void
+on_close(struct ws_client *c)
+{
+    printf("Connection closed.\n");
+}
+
+void
+on_ping(struct ws_client *c)
+{
+    printf("PING\n");
+}
 
 int
 main(int argc, char *argv[])
@@ -62,52 +86,15 @@ main(int argc, char *argv[])
             /* This is the client process */
             close(sockfd);
             struct ws_client *c = ws_client_new(newsockfd);
-            doprocessing(c);
+            c->on_text_frame = &on_text_frame;
+            c->on_bin_frame = &on_bin_frame;
+            c->on_close = &on_close;
+            c->on_ping = &on_ping;
+            ws_client_work(c);
             exit(0);
         } else {
             close(newsockfd);
         }
         // exit(1);
     }
-}
-
-void
-printbytes(const char t)
-{
-    int m;
-    for (m = 128; m > 0; m = m >> 1) {
-        printf("%u ", t & m ? 1 : 0);
-    }
-}
-
-void
-doprocessing(struct ws_client *c)
-{
-    int n, i, num;
-    n = process_handshake(c);
-    if (n == 0) {
-        perror("Error handshake");
-        exit(1);
-    }
-    ws_client_remove_data(c);
-    printf("Success handshake\n");
-    int ind = 0;
-    while (1) {
-        struct frame *r = ws_client_receive(c);
-        if (r == NULL) {
-            continue;
-        }
-        printf("<<%d\n%s\n", ind++, r->payload);
-        frame_free(r);
-
-        /*struct frame *s = frame_create(r->payload, r->payload_size, r->opcode);
-        
-        printf(">>\n%s\n", s->payload);
-        ws_client_send(c, s);
-
-        frame_free(s);
-        frame_free(r);
-        ws_client_remove_data(c);*/
-    }
-    // exit(0);
 }

@@ -9,6 +9,11 @@ struct ws_client {
 
     char *buffer;
     size_t size;
+
+    void (*on_text_frame)(struct ws_client *, char *, size_t);
+    void (*on_bin_frame)(struct ws_client *, char *, size_t);
+    void (*on_close)(struct ws_client *);
+    void (*on_ping)(struct ws_client *);
 };
 
 struct ws_client*
@@ -28,5 +33,8 @@ ws_client_receive(struct ws_client *c);
 
 int
 ws_client_send(struct ws_client *c, struct frame *f);
+
+void
+ws_client_work(struct ws_client *c);
 
 #endif  // CLIENT_H_

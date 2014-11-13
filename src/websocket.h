@@ -1,7 +1,9 @@
 #ifndef WEBSOCKET_H_
 #define WEBSOCKET_H_
 
-int
-process_handshake(struct ws_client *);
+#include "http.h"
+
+struct http_response *
+get_handshake_response(char *header);
 
 #endif  // WEBSOCKET_H_

@@ -1,5 +1,8 @@
 <script>
 var socket = new WebSocket("ws://localhost:4980");
+socket.set_monitor_interval(1);
+console.log(socket);
+
 socket.onopen = function() { 
 	alert("Соединение установлено."); 
 };
@@ -21,14 +24,9 @@ socket.onerror = function(error) {
 	alert("Ошибка " + error.message); 
 };
 
-var ind = 0;
 function sendMessage()
 {
-	for(i=0;i<3;i++){
-		console.log(ind);
-		socket.send(document.getElementById('input').value);
-		ind++;
-	}
+	socket.send(document.getElementById('input').value);
 }
 </script>
 <input type="text" id="input" value="test">

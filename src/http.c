@@ -18,11 +18,11 @@ void
 http_response_set_header(struct http_response *r, const char *k, const char *v)
 {
     int i, pos = r->header_count;
-    size_t key_sz = strlen(k);
-    size_t val_sz = strlen(v);
+    size_t key_size = strlen(k);
+    size_t val_size = strlen(v);
 
     for (i = 0; i < r->header_count; ++i) {
-        if (strncmp(r->headers[i].key, k, key_sz) == 0) {
+        if (strncmp(r->headers[i].key, k, key_size) == 0) {
             pos = i;
             // убираем старое значение перед заменой
             free(r->headers[i].key);
@@ -38,24 +38,24 @@ http_response_set_header(struct http_response *r, const char *k, const char *v)
     }
 
     // копируем ключ
-    r->headers[pos].key = calloc(key_sz + 1, 1);
-    memcpy(r->headers[pos].key, k, key_sz);
-    r->headers[pos].key_sz = key_sz;
+    r->headers[pos].key = calloc(key_size + 1, 1);
+    memcpy(r->headers[pos].key, k, key_size);
+    r->headers[pos].key_size = key_size;
 
     // копируем значение
-    r->headers[pos].val = calloc(val_sz + 1, 1);
-    memcpy(r->headers[pos].val, v, val_sz);
-    r->headers[pos].val_sz = val_sz;
+    r->headers[pos].val = calloc(val_size + 1, 1);
+    memcpy(r->headers[pos].val, v, val_size);
+    r->headers[pos].val_size = val_size;
 }
 
 void
-http_response_write(struct http_response *r)
+http_response_pack(struct http_response *r)
 {
     char *p;
     int i, ret;
 
-    r->out_sz = sizeof("HTTP/1.1 xxx ")-1 + strlen(r->msg) + 2;
-    r->out = calloc(r->out_sz + 1, 1);
+    r->out_size = sizeof("HTTP/1.1 xxx ")-1 + strlen(r->msg) + 2;
+    r->out = calloc(r->out_size + 1, 1);
 
     ret = sprintf(r->out, "HTTP/1.1 %d %s\r\n", r->code, r->msg);
     (void)ret;
@@ -71,42 +71,42 @@ http_response_write(struct http_response *r)
 
     for (i = 0; i < r->header_count; ++i) {
         /* "Key: Value\r\n" */
-        size_t header_sz = r->headers[i].key_sz + 2 + r->headers[i].val_sz + 2;
-        r->out = realloc(r->out, r->out_sz + header_sz);
-        p = r->out + r->out_sz;
+        size_t header_size = r->headers[i].key_size + 2 + r->headers[i].val_size + 2;
+        r->out = realloc(r->out, r->out_size + header_size);
+        p = r->out + r->out_size;
 
         /* add key */
-        memcpy(p, r->headers[i].key, r->headers[i].key_sz);
-        p += r->headers[i].key_sz;
+        memcpy(p, r->headers[i].key, r->headers[i].key_size);
+        p += r->headers[i].key_size;
 
         /* add ": " */
         *(p++) = ':';
         *(p++) = ' ';
 
         /* add value */
-        memcpy(p, r->headers[i].val, r->headers[i].val_sz);
-        p += r->headers[i].val_sz;
+        memcpy(p, r->headers[i].val, r->headers[i].val_size);
+        p += r->headers[i].val_size;
 
         /* add "\r\n" */
         *(p++) = '\r';
         *(p++) = '\n';
 
-        r->out_sz += header_sz;
+        r->out_size += header_size;
     }
 
     /* end of headers */
-    r->out = realloc(r->out, r->out_sz + 2);
-    memcpy(r->out + r->out_sz, "\r\n", 2);
-    r->out_sz += 2;
+    r->out = realloc(r->out, r->out_size + 2);
+    memcpy(r->out + r->out_size, "\r\n", 2);
+    r->out_size += 2;
 
     /* append body if there is one. */
     if (r->body && r->body_len) {
         char *tmp = (char*)r->body;
         size_t tmp_len = r->body_len;
 
-        r->out = realloc(r->out, r->out_sz + tmp_len);
-        memcpy(r->out + r->out_sz, tmp, tmp_len);
-        r->out_sz += tmp_len;
+        r->out = realloc(r->out, r->out_size + tmp_len);
+        memcpy(r->out + r->out_size, tmp, tmp_len);
+        r->out_size += tmp_len;
     }
 }
 
