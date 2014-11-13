@@ -56,9 +56,17 @@ $(OBJ)/$(TEST)/%.o: $(TEST)/%.c
 $(BIN)/test_frame: $(OBJ)/$(TEST)/test_frame.o $(OBJ)/frame.o
 	$(TEST_CC)
 
+$(BIN)/test_websocket: $(OBJ)/$(TEST)/test_websocket.o $(OBJ)/websocket.o $(OBJ)/http.o $(OBJ)/lib/sha1.o $(OBJ)/lib/base64.o
+	$(TEST_CC)
+
+$(BIN)/test_http: $(OBJ)/$(TEST)/test_http.o $(OBJ)/http.o
+	$(TEST_CC)
+
 # вызов модульных тестов
-test_units: mk_dirs $(BIN)/test_frame
+test_units: mk_dirs $(BIN)/test_frame $(BIN)/test_websocket $(BIN)/test_http
 	$(BIN)/test_frame
+	$(BIN)/test_websocket
+	$(BIN)/test_http
 	@echo Unit tests: OK!
 
 tests: test_style test_units
