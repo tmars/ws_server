@@ -7,10 +7,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-struct ws_client*
-ws_client_new(int sock)
+struct client*
+client_new(int sock)
 {
-    struct ws_client *c = calloc(1, sizeof(struct ws_client));
+    struct client *c = calloc(1, sizeof(struct client));
 
     // Делаем сокет не блокирующим
     int flags = fcntl(sock, F_GETFL, 0);
@@ -27,7 +27,7 @@ ws_client_new(int sock)
 }
 
 void
-ws_client_remove_data(struct ws_client *c)
+client_remove_data(struct client *c)
 {
     free(c->buffer);
     c->buffer = NULL;
@@ -35,7 +35,7 @@ ws_client_remove_data(struct ws_client *c)
 }
 
 int
-ws_client_read(struct ws_client *c)
+client_read(struct client *c)
 {
     char buffer[4096];
     int n;
@@ -56,7 +56,7 @@ ws_client_read(struct ws_client *c)
 }
 
 int
-ws_client_write(struct ws_client *c, char *data, size_t size)
+client_write(struct client *c, char *data, size_t size)
 {
     int n;
 
@@ -69,7 +69,7 @@ ws_client_write(struct ws_client *c, char *data, size_t size)
 }
 
 struct frame *
-ws_client_receive(struct ws_client *c)
+client_receive(struct client *c)
 {
     size_t size;
 
@@ -83,7 +83,7 @@ ws_client_receive(struct ws_client *c)
     size = c->size - f->size;
     char *buffer = malloc(size);
     memcpy(buffer, c->buffer + f->size, size);
-    ws_client_remove_data(c);
+    client_remove_data(c);
     c->buffer = buffer;
     c->size = size;
 
@@ -91,27 +91,27 @@ ws_client_receive(struct ws_client *c)
 }
 
 int
-ws_client_send(struct ws_client *c, struct frame *f)
+client_send(struct client *c, struct frame *f)
 {
     if (f == NULL) {
         return -1;
     }
 
-    return ws_client_write(c, f->data, f->size);
+    return client_write(c, f->data, f->size);
 }
 
 void
-ws_client_work(struct ws_client *c)
+client_work(struct client *c)
 {
     int n;
 
     // Считываем буфер
     do {
-        n = ws_client_read(c);
+        n = client_read(c);
     } while (n <= 0);
 
     struct http_response *r = get_handshake_response(c->buffer);
-    ws_client_remove_data(c);
+    client_remove_data(c);
     if (r == NULL) {
         perror("Error handshake");
         exit(1);
@@ -122,8 +122,8 @@ ws_client_work(struct ws_client *c)
     http_response_free(r);
 
     while (1) {
-        ws_client_read(c);
-        struct frame *f = ws_client_receive(c);
+        client_read(c);
+        struct frame *f = client_receive(c);
         if (f == NULL) {
             continue;
         }
@@ -131,7 +131,7 @@ ws_client_work(struct ws_client *c)
         if (f->opcode == OPCODE_PING) {
             // Пинг-понг
             struct frame *a = frame_create(NULL, 0, OPCODE_PONG);
-            ws_client_send(c, a);
+            client_send(c, a);
             frame_free(a);
 
             if (c->on_ping != NULL) {

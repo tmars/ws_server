@@ -4,37 +4,37 @@
 #ifndef CLIENT_H_
 #define CLIENT_H_
 
-struct ws_client {
+struct client {
     int sock;
 
     char *buffer;
     size_t size;
 
-    void (*on_text_frame)(struct ws_client *, char *, size_t);
-    void (*on_bin_frame)(struct ws_client *, char *, size_t);
-    void (*on_close)(struct ws_client *);
-    void (*on_ping)(struct ws_client *);
+    void (*on_text_frame)(struct client *, char *, size_t);
+    void (*on_bin_frame)(struct client *, char *, size_t);
+    void (*on_close)(struct client *);
+    void (*on_ping)(struct client *);
 };
 
-struct ws_client*
-ws_client_new(int sock);
+struct client*
+client_new(int sock);
 
 void
-ws_client_remove_data(struct ws_client *c);
+client_remove_data(struct client *c);
 
 int
-ws_client_read(struct ws_client *c);
+client_read(struct client *c);
 
 int
-ws_client_write(struct ws_client *c, char *data, size_t size);
+client_write(struct client *c, char *data, size_t size);
 
 struct frame *
-ws_client_receive(struct ws_client *c);
+client_receive(struct client *c);
 
 int
-ws_client_send(struct ws_client *c, struct frame *f);
+client_send(struct client *c, struct frame *f);
 
 void
-ws_client_work(struct ws_client *c);
+client_work(struct client *c);
 
 #endif  // CLIENT_H_

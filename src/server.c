@@ -71,11 +71,11 @@ server_start(struct server *s)
         if (pid == 0) {
             /* This is the client process */
             close(s->sock);
-            struct ws_client *c = ws_client_new(client_sock);
+            struct client *c = client_new(client_sock);
             if (s->on_client != NULL) {
                 (*s->on_client)(c);
             }
-            ws_client_work(c);
+            client_work(c);
             exit(0);
         } else {
             close(client_sock);

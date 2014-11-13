@@ -4,13 +4,13 @@
 #include "server.h"
 
 void
-on_text_frame(struct ws_client *c, char *text, size_t size)
+on_text_frame(struct client *c, char *text, size_t size)
 {
     printf("size=%d\ncontent:\n%s\n", size, text);
 }
 
 void
-on_bin_frame(struct ws_client *c, char *data, size_t size)
+on_bin_frame(struct client *c, char *data, size_t size)
 {
     size_t i;
     printf("size=%d", size);
@@ -20,19 +20,19 @@ on_bin_frame(struct ws_client *c, char *data, size_t size)
 }
 
 void
-on_close(struct ws_client *c)
+on_close(struct client *c)
 {
     printf("Connection closed.\n");
 }
 
 void
-on_ping(struct ws_client *c)
+on_ping(struct client *c)
 {
     printf("PING\n");
 }
 
 void
-on_client(struct ws_client *c)
+on_client(struct client *c)
 {
     printf("Connection opened.\n");
 

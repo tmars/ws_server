@@ -6,7 +6,7 @@
 struct server {
     int port;
     int sock;
-    void (*on_client)(struct ws_client *);
+    void (*on_client)(struct client *);
 };
 
 struct server *
