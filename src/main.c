@@ -13,7 +13,7 @@ void
 on_bin_frame(struct client *c, char *data, size_t size)
 {
     size_t i;
-    printf("size=%d", size);
+    printf("size=%d\ncontent:\n", size);
     for (i = 0; i < size; i++) {
         printf("0x%02x\n", data[i]);
     }

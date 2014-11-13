@@ -27,6 +27,15 @@ function sendMessage()
 {
 	socket.send(document.getElementById('input').value);
 }
+function sendBinary()
+{
+	var s = document.getElementById('input').value;
+	var ba = new Uint8Array(s.length);
+	for (var i = 0; i < s.length; i++)
+		ba[i] = s.charCodeAt(i)
+	socket.send(ba.buffer);
+}
 </script>
 <input type="text" id="input" value="test">
 <button onclick="sendMessage()">send</button>
+<button onclick="sendBinary()">send bin</button>
