@@ -60,11 +60,11 @@ frame_parse(const char *buffer, size_t size)
         p += 4;
     }
 
+    printf("1%d\n", buffer[0] & 0x80);
     // Неостаточно данных
     if (len > size - (p - buffer)) {
         return NULL;
     }
-
 
     if (buffer[0] & 0x80) {  // FIN bit set
         struct frame *f = calloc(1, sizeof(struct frame));

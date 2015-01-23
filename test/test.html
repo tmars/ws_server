@@ -25,17 +25,26 @@ socket.onerror = function(error) {
 
 function sendMessage()
 {
-	socket.send(document.getElementById('input').value);
+	socket.send(document.getElementById('text').value);
 }
+
 function sendBinary()
 {
-	var s = document.getElementById('input').value;
-	var ba = new Uint8Array(s.length);
-	for (var i = 0; i < s.length; i++)
-		ba[i] = s.charCodeAt(i)
+	var size = parseInt(document.getElementById('size').value);
+	var ba = new Uint8Array(size);
+	for (var i = 0; i < size; i++) {
+		var t = Math.round(Math.random() * 128);
+		ba[i] = t;
+		console.log(t);
+	}
+
 	socket.send(ba.buffer);
+
+	size += 10;
+	document.getElementById('size').value = size;
 }
 </script>
-<input type="text" id="input" value="test">
-<button onclick="sendMessage()">send</button>
+<input type="text" id="text" value="test">
+<button onclick="sendMessage()">send</button><br>
+<input type="size" id="size" value="10">
 <button onclick="sendBinary()">send bin</button>
